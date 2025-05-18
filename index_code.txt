@@ -57,6 +57,7 @@
   <audio id="short-sound-start" src="Water Bubble Sound Effect.mp3"></audio>
   <audio id="short-sound-end" src="Water Bubble Sound Effect.mp3"></audio>
   <audio id="long-sound" src="Ocean Wave Sound Effect.mp3"></audio>
+  <audio id="cycle-sound" src="Ocean Wave Sound Effect.mp3"></audio>
 
   <script>
     const startBtn = document.getElementById('start');
@@ -65,43 +66,51 @@
     const shortSoundStart = document.getElementById('short-sound-start');
     const shortSoundEnd = document.getElementById('short-sound-end');
     const longSound = document.getElementById('long-sound');
+    const cycleSound = document.getElementById('cycle-sound');
 
-    let intervalId, pause = false;
+    let intervalId, pause = false, stop = false;
 
     function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     async function startSession() {
-      while (true) {
+      stop = false;
+      while (!stop) {
         await focusPeriod();
+        if (stop) break;
         try { longSound.play(); } catch (e) {}
-        await countdown(600, '長休息中');
+        await countdown(600, 'Long Break');
+        if (stop) break;
+        try { cycleSound.play(); } catch (e) {}
       }
     }
 
     async function focusPeriod() {
       let focusTime = 3600; // 60 分鐘
-      let nextBreak = randomBreakTime();
+      let totalElapsed = 0;
+      let nextBreakIn = randomBreakTime();
 
-      while (focusTime > 0) {
-        if (pause) return;
-        if (focusTime === nextBreak) {
+      while (focusTime > 0 && !stop) {
+        while (pause) await sleep(200);
+
+        if (totalElapsed === nextBreakIn) {
           try { shortSoundStart.play(); } catch (e) {}
-          await countdown(20, '短休息中');
+          await countdown(20, 'Short Break');
           try { shortSoundEnd.play(); } catch (e) {}
-          nextBreak = focusTime - randomBreakTime();
-        } else {
-          timerDisplay.textContent = `Focusing ${formatTime(focusTime)}`;
-          await sleep(1000);
-          focusTime--;
+          nextBreakIn += randomBreakTime();
         }
+
+        timerDisplay.textContent = `Focusing ${formatTime(focusTime)}`;
+        await sleep(1000);
+        focusTime--;
+        totalElapsed++;
       }
     }
 
     async function countdown(seconds, label) {
-      while (seconds > 0) {
-        if (pause) return;
+      while (seconds > 0 && !stop) {
+        while (pause) await sleep(200);
         timerDisplay.textContent = `${label}：${formatTime(seconds)}`;
         await sleep(1000);
         seconds--;
@@ -118,16 +127,31 @@
       return Math.floor(Math.random() * 121) + 180; // 180~300秒
     }
 
-    startBtn.addEventListener('click', () => {
-      [shortSoundStart, shortSoundEnd, longSound].forEach(audio => {
+    startBtn.addEventListener('click', startHandler);
+
+    function startHandler() {
+      [shortSoundStart, shortSoundEnd, longSound, cycleSound].forEach(audio => {
         audio.play().then(() => audio.pause()).catch(() => {});
       });
 
       controls.innerHTML = '<button id="pause">Pause</button><button id="stop">End</button>';
-      document.getElementById('pause').addEventListener('click', () => pause = !pause);
-      document.getElementById('stop').addEventListener('click', () => location.reload());
+
+      const pauseBtn = document.getElementById('pause');
+      pauseBtn.addEventListener('click', () => {
+        pause = !pause;
+        pauseBtn.textContent = pause ? 'Resume' : 'Pause';
+      });
+
+      document.getElementById('stop').addEventListener('click', () => {
+        stop = true;
+        pause = false;
+        timerDisplay.textContent = 'Preparing...';
+        controls.innerHTML = '<button id="start">Start</button>';
+        document.getElementById('start').addEventListener('click', startHandler);
+      });
+
       startSession();
-    });
+    }
   </script>
 </body>
 </html>

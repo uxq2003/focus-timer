@@ -57,6 +57,7 @@
   <audio id="short-sound-start" src="Water Bubble Sound Effect.mp3"></audio>
   <audio id="short-sound-end" src="Water Bubble Sound Effect.mp3"></audio>
   <audio id="long-sound" src="Ocean Wave Sound Effect.mp3"></audio>
+  <audio id="cycle-sound" src="Ocean Wave Sound Effect.mp3"></audio>
 
   <script>
     const startBtn = document.getElementById('start');
@@ -65,6 +66,7 @@
     const shortSoundStart = document.getElementById('short-sound-start');
     const shortSoundEnd = document.getElementById('short-sound-end');
     const longSound = document.getElementById('long-sound');
+    const cycleSound = document.getElementById('cycle-sound');
 
     let intervalId, pause = false, stop = false;
 
@@ -78,7 +80,9 @@
         await focusPeriod();
         if (stop) break;
         try { longSound.play(); } catch (e) {}
-        await countdown(600, '長休息中');
+        await countdown(600, 'Long Break');
+        if (stop) break;
+        try { cycleSound.play(); } catch (e) {}
       }
     }
 
@@ -92,7 +96,7 @@
 
         if (totalElapsed === nextBreakIn) {
           try { shortSoundStart.play(); } catch (e) {}
-          await countdown(20, '短休息中');
+          await countdown(20, 'Short Break');
           try { shortSoundEnd.play(); } catch (e) {}
           nextBreakIn += randomBreakTime();
         }
@@ -126,7 +130,7 @@
     startBtn.addEventListener('click', startHandler);
 
     function startHandler() {
-      [shortSoundStart, shortSoundEnd, longSound].forEach(audio => {
+      [shortSoundStart, shortSoundEnd, longSound, cycleSound].forEach(audio => {
         audio.play().then(() => audio.pause()).catch(() => {});
       });
 
