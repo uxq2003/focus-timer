@@ -111,7 +111,7 @@
     async function countdown(seconds, label) {
       while (seconds > 0 && !stop) {
         while (pause) await sleep(200);
-        timerDisplay.textContent = `${label}：${formatTime(seconds)}`;
+        timerDisplay.textContent = `${label}:${formatTime(seconds)}`;
         await sleep(1000);
         seconds--;
       }
