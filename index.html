@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Learning makes me happy</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Comic Sans MS', 'Segoe UI', cursive;
+      background-image: url('dog.png');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #333;
+      text-align: center;
+      transition: background-image 1s ease-in-out;
+    }
+
+    .container {
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+
+    button {
+      font-size: 1.2rem;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      background-color: #90cdf4;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #63b3ed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Learning makes me happy</h1>
+    <div id="timer-display">Preparing...</div>
+    <div id="controls">
+      <button id="start">Start</button>
+    </div>
+  </div>
+
+  <audio id="short-sound-start" src="Water Bubble Sound Effect.mp3"></audio>
+  <audio id="short-sound-end" src="Water Bubble Sound Effect.mp3"></audio>
+  <audio id="long-sound" src="Ocean Wave Sound Effect.mp3"></audio>
+
+  <script>
+    const startBtn = document.getElementById('start');
+    const controls = document.getElementById('controls');
+    const timerDisplay = document.getElementById('timer-display');
+    const shortSoundStart = document.getElementById('short-sound-start');
+    const shortSoundEnd = document.getElementById('short-sound-end');
+    const longSound = document.getElementById('long-sound');
+
+    let intervalId, pause = false, stop = false;
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function startSession() {
+      stop = false;
+      while (!stop) {
+        await focusPeriod();
+        if (stop) break;
+        try { longSound.play(); } catch (e) {}
+        await countdown(600, '長休息中');
+      }
+    }
+
+    async function focusPeriod() {
+      let focusTime = 3600; // 60 分鐘
+      let totalElapsed = 0;
+      let nextBreakIn = randomBreakTime();
+
+      while (focusTime > 0 && !stop) {
+        while (pause) await sleep(200);
+
+        if (totalElapsed === nextBreakIn) {
+          try { shortSoundStart.play(); } catch (e) {}
+          await countdown(20, '短休息中');
+          try { shortSoundEnd.play(); } catch (e) {}
+          nextBreakIn += randomBreakTime();
+        }
+
+        timerDisplay.textContent = `Focusing ${formatTime(focusTime)}`;
+        await sleep(1000);
+        focusTime--;
+        totalElapsed++;
+      }
+    }
+
+    async function countdown(seconds, label) {
+      while (seconds > 0 && !stop) {
+        while (pause) await sleep(200);
+        timerDisplay.textContent = `${label}：${formatTime(seconds)}`;
+        await sleep(1000);
+        seconds--;
+      }
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function randomBreakTime() {
+      return Math.floor(Math.random() * 121) + 180; // 180~300秒
+    }
+
+    startBtn.addEventListener('click', startHandler);
+
+    function startHandler() {
+      [shortSoundStart, shortSoundEnd, longSound].forEach(audio => {
+        audio.play().then(() => audio.pause()).catch(() => {});
+      });
+
+      controls.innerHTML = '<button id="pause">Pause</button><button id="stop">End</button>';
+
+      const pauseBtn = document.getElementById('pause');
+      pauseBtn.addEventListener('click', () => {
+        pause = !pause;
+        pauseBtn.textContent = pause ? 'Resume' : 'Pause';
+      });
+
+      document.getElementById('stop').addEventListener('click', () => {
+        stop = true;
+        pause = false;
+        timerDisplay.textContent = 'Preparing...';
+        controls.innerHTML = '<button id="start">Start</button>';
+        document.getElementById('start').addEventListener('click', startHandler);
+      });
+
+      startSession();
+    }
+  </script>
+</body>
+</html>
